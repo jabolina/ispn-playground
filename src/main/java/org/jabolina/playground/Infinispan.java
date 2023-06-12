@@ -51,16 +51,20 @@ public class Infinispan {
    */
   public static ConfigurationBuilder connectionConfig() {
     ConfigurationBuilder builder = new ConfigurationBuilder();
-    builder.addServer().host(HOST).port(SINGLE_PORT).security()
+    builder.addServer()
+          .host("node-2").port(SINGLE_PORT)
+          .host("unknown-node-host").port(SINGLE_PORT)
+          .host("node-1").port(SINGLE_PORT)
+        .security()
         .authentication()
         //Add user credentials.
         .username(USER)
         .password(PASSWORD)
-            .maxRetries(0)
-                .socketTimeout(300_000);
+            .maxRetries(3)
+            .socketTimeout(10_000);
 
     // Docker 4 Mac Workaround. Don't use BASIC intelligence in production
-    builder.clientIntelligence(ClientIntelligence.BASIC);
+    builder.clientIntelligence(ClientIntelligence.HASH_DISTRIBUTION_AWARE);
 
     // Make sure the remote cache is available.
     // If the cache does not exist, the cache will be created

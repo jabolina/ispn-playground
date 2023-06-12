@@ -1,32 +1,48 @@
 package org.jabolina.playground;
 
 
+import static org.jabolina.playground.Infinispan.TUTORIAL_CACHE_NAME;
+
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Scanner;
 import java.util.Set;
 
-import jakarta.transaction.TransactionManager;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.configuration.TransactionMode;
+import org.infinispan.client.hotrod.impl.operations.RetryOnFailureOperation;
 import org.infinispan.client.hotrod.multimap.MultimapCacheManager;
 import org.infinispan.client.hotrod.multimap.RemoteMultimapCache;
 import org.infinispan.client.hotrod.multimap.RemoteMultimapCacheManagerFactory;
-import org.infinispan.client.hotrod.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.configuration.StringConfiguration;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.CloseableIteratorSet;
 
-import static org.jabolina.playground.Infinispan.TUTORIAL_CACHE_NAME;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.Level;
 
 public class RemoteCacheClient {
 
-  public static void main(String[] args) throws Exception {
-    Scanner scanner = new Scanner(System.in);
+  public static void main(String[] args) {
+    Logger root = (Logger) org.slf4j.LoggerFactory.getLogger(RetryOnFailureOperation.class);
+    root.setLevel(Level.DEBUG);
     RemoteCacheManager cacheManager = Infinispan.connect();
-    RemoteCache<String, String> cache = cacheManager.getCache(TUTORIAL_CACHE_NAME);
+
+    try {
+      RemoteCache<String, String> cache = cacheManager.getCache(TUTORIAL_CACHE_NAME);
+      loop(cacheManager, cache);
+    } catch (Throwable t) {
+      System.out.println("CLIENT INTELLIGENCE: ");
+      System.out.println(cacheManager.getChannelFactory().getClientIntelligence());
+    } finally {
+      System.out.println("Exiting...");
+      cacheManager.stop();
+    }
+  }
+
+  private static void loop(RemoteCacheManager cacheManager, RemoteCache<String, String> cache) {
+    Scanner scanner = new Scanner(System.in);
 
     while (true) {
       System.out.println("Enter command: ");
@@ -69,25 +85,6 @@ public class RemoteCacheClient {
         continue;
       }
 
-      if (in.startsWith("reconnect")) {
-        cacheManager.stop();
-        cacheManager.start();
-        System.out.println("Reconnected client");
-        continue;
-      }
-
-      if (in.startsWith("lock")) {
-        RemoteCache<String, String> txCache = cacheManager.getCache(TUTORIAL_CACHE_NAME, TransactionMode.NON_XA, GenericTransactionManagerLookup.getInstance().getTransactionManager());
-        TransactionManager tm = GenericTransactionManagerLookup.getInstance().getTransactionManager();
-        tm.begin();
-        try {
-
-        } catch (Throwable t) {
-          t.printStackTrace();
-          tm.rollback();
-        }
-      }
-
       if (in.startsWith("multimap")) {
         String operation = values[1];
         MultimapCacheManager<String, String> remoteMultimapCacheManager = RemoteMultimapCacheManagerFactory.from(cacheManager);
@@ -104,9 +101,6 @@ public class RemoteCacheClient {
         }
       }
     }
-
-    cacheManager.stop();
-    System.out.println("Exiting...");
   }
 
   private static void populate(RemoteCache<String, String> cache, int size) {

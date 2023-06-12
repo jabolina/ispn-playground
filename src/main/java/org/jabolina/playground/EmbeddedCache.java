@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.Executors;
 
-import jakarta.transaction.TransactionManager;
+//import jakarta.transaction.TransactionManager;
 import org.infinispan.Cache;
 import org.infinispan.affinity.KeyAffinityService;
 import org.infinispan.affinity.KeyAffinityServiceFactory;
@@ -103,7 +103,7 @@ public class EmbeddedCache {
         }
       }
 
-      if (in.startsWith("lock")) {
+      /*if (in.startsWith("lock")) {
         TransactionManager tm = cache.getAdvancedCache().getTransactionManager();
         tm.begin();
         try {
@@ -116,7 +116,7 @@ public class EmbeddedCache {
           t.printStackTrace();
           tm.rollback();
         }
-      }
+      }*/
     }
 
     cacheManager.close();
