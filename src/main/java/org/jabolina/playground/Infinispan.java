@@ -15,34 +15,12 @@ public class Infinispan {
   public static final String USER = "admin";
   public static final String PASSWORD = "password";
   public static final String HOST = "127.0.0.1";
-  public static final int SINGLE_PORT = ConfigurationProperties.DEFAULT_HOTROD_PORT + 00;
+  public static final int SINGLE_PORT = ConfigurationProperties.DEFAULT_HOTROD_PORT;
 
-  public static final String TUTORIAL_CACHE_NAME = "manual";
-  public static final String TUTORIAL_CACHE_CONFIG =
-      "<?xml version=\"1.0\"?>\n" +
-      "<distributed-cache name=\"eviction\" statistics=\"true\" mode=\"SYNC\">\n" +
-      " <encoding>\n" +
-      "   <key media-type=\"text/plain\"/>\n" +
-      "   <value media-type=\"text/plain\"/>\n" +
-      " </encoding>\n" +
-      " <partition-handling when-split=\"DENY_READ_WRITES\"\n" +
-      "                     merge-policy=\"PREFERRED_ALWAYS\"/>\n" +
-      " <locking isolation=\"READ_COMMITTED\"/>\n" +
-      " <transaction\n" +
-      "   locking=\"PESSIMISTIC\"\n" +
-      "   auto-commit=\"true\"\n" +
-      "   complete-timeout=\"60000\"\n" +
-      "   mode=\"NON_XA\"\n" +
-      "   notifications=\"true\"\n" +
-      "   reaper-interval=\"30000\"\n" +
-      "   recovery-cache=\"__recoveryInfoCacheName__\"\n" +
-      "   stop-timeout=\"30000\"\n" +
-      "   transaction-manager-lookup=\"org.infinispan.transaction.lookup.GenericTransactionManagerLookup\"/>" +
-      " <memory max-count=\"1000\"/>\n" +
-      " <persistence passivation=\"false\">\n" +
-      "   <file-store purge=\"true\" read-only=\"false\" preload=\"false\"/>\n" +
-      " </persistence>\n" +
-      "</distributed-cache>";
+  public static final String TUTORIAL_CACHE_NAME = "playground";
+  public static final String TUTORIAL_CACHE_CONFIG = """
+        <?xml version="1.0"?>
+        <distributed-cache name="CACHE_NAME" mode="SYNC" remote-timeout="30000" statistics="true"/>""";
 
   /**
    * Returns the configuration builder with the connection information
@@ -52,16 +30,12 @@ public class Infinispan {
   public static ConfigurationBuilder connectionConfig() {
     ConfigurationBuilder builder = new ConfigurationBuilder();
     builder.addServer()
-          .host("node-2").port(SINGLE_PORT)
-          .host("unknown-node-host").port(SINGLE_PORT)
-          .host("node-1").port(SINGLE_PORT)
+        .host(HOST).port(SINGLE_PORT)
         .security()
         .authentication()
         //Add user credentials.
         .username(USER)
-        .password(PASSWORD)
-            .maxRetries(3)
-            .socketTimeout(10_000);
+        .password(PASSWORD);
 
     // Docker 4 Mac Workaround. Don't use BASIC intelligence in production
     builder.clientIntelligence(ClientIntelligence.HASH_DISTRIBUTION_AWARE);

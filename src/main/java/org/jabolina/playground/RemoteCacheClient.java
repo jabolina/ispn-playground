@@ -1,6 +1,5 @@
 package org.jabolina.playground;
 
-
 import static org.jabolina.playground.Infinispan.TUTORIAL_CACHE_NAME;
 
 import java.util.Collection;
@@ -10,7 +9,6 @@ import java.util.Set;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.impl.operations.RetryOnFailureOperation;
 import org.infinispan.client.hotrod.multimap.MultimapCacheManager;
 import org.infinispan.client.hotrod.multimap.RemoteMultimapCache;
 import org.infinispan.client.hotrod.multimap.RemoteMultimapCacheManagerFactory;
@@ -19,13 +17,13 @@ import org.infinispan.commons.configuration.StringConfiguration;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.CloseableIteratorSet;
 
-import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
 
 public class RemoteCacheClient {
 
   public static void main(String[] args) {
-    Logger root = (Logger) org.slf4j.LoggerFactory.getLogger(RetryOnFailureOperation.class);
+    Logger root = (Logger) org.slf4j.LoggerFactory.getLogger(RemoteCacheClient.class);
     root.setLevel(Level.DEBUG);
     RemoteCacheManager cacheManager = Infinispan.connect();
 
@@ -33,8 +31,7 @@ public class RemoteCacheClient {
       RemoteCache<String, String> cache = cacheManager.getCache(TUTORIAL_CACHE_NAME);
       loop(cacheManager, cache);
     } catch (Throwable t) {
-      System.out.println("CLIENT INTELLIGENCE: ");
-      System.out.println(cacheManager.getChannelFactory().getClientIntelligence());
+      t.printStackTrace(System.err);
     } finally {
       System.out.println("Exiting...");
       cacheManager.stop();

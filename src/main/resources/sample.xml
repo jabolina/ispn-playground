@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<infinispan
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="urn:infinispan:config:12.1 https://infinispan.org/schemas/infinispan-config-12.1.xsd"
+        xmlns="urn:infinispan:config:12.1">
+
+    <threads>
+        <thread-factory name="tf1" group-name="GRP_TF1" />
+        <thread-factory name="tf2" group-name="GRP_TF2" />
+        <blocking-bounded-queue-thread-pool thread-factory="tf1" name="tp1" keepalive-time="60" core-threads="32" max-threads="32" queue-length="131072" />
+        <non-blocking-bounded-queue-thread-pool thread-factory="tf2" name="tp2" keepalive-time="60" core-threads="32" max-threads="32" queue-length="131072" />
+    </threads>
+
+    <cache-container name="default" statistics="false" blocking-executor="tp1" non-blocking-executor="tp2">
+
+        <!--<global-state>
+            <persistent-location path="./state-1"/>
+        </global-state>-->
+
+        <metrics gauges="false" histograms="false"/>
+
+        <serialization marshaller="org.infinispan.commons.marshall.JavaSerializationMarshaller">
+            <allow-list>
+                <regex>com.elpical.*</regex>
+                <regex>java.util.*</regex>
+                <regex>java.lang.*</regex>
+            </allow-list>
+        </serialization>
+
+        <transport cluster="${infinispan.cluster.name:cluster}" stack="${infinispan.cluster.stack:tcp}" node-name="${infinispan.node.name:}"/>
+
+        <replicated-cache name="custom_cache" mode="SYNC" remote-timeout="120000">
+            <partition-handling when-split="ALLOW_READ_WRITES" merge-policy="PREFERRED_NON_NULL" />
+            <locking striping="false" acquire-timeout="120000" concurrency-level="500" isolation="REPEATABLE_READ" />
+            <transaction locking="PESSIMISTIC" auto-commit="false" mode="FULL_XA" notifications="false" transaction-manager-lookup="org.infinispan.transaction.lookup.GenericTransactionManagerLookup"/>
+            <expiration max-idle="-1" />
+            <state-transfer enabled="true" timeout="120000" await-initial-transfer="true" />
+            <persistence  passivation="false">
+                <file-store shared="false" preload="true" fetch-state="true" read-only="false" purge="false" path="./database_data/CUSTOM_CACHE">
+                    <write-behind modification-queue-size="5" fail-silently="false"/>
+                </file-store>
+            </persistence>
+        </replicated-cache>
+
+        <clustered-locks xmlns="urn:infinispan:config:clustered-locks:14.0"/>
+    </cache-container>
+</infinispan>

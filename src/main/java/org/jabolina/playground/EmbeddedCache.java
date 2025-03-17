@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.Executors;
 
-//import jakarta.transaction.TransactionManager;
 import org.infinispan.Cache;
 import org.infinispan.affinity.KeyAffinityService;
 import org.infinispan.affinity.KeyAffinityServiceFactory;
@@ -16,11 +15,10 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
-import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
-import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
+import org.infinispan.util.concurrent.IsolationLevel;
 
 
 public class EmbeddedCache {
@@ -38,15 +36,12 @@ public class EmbeddedCache {
         .clustering()
           .cacheMode(CacheMode.DIST_SYNC)
           .hash().numOwners(2)
-        .partitionHandling()
-          .whenSplit(PartitionHandling.DENY_READ_WRITES)
-        .transaction()
-          .transactionMode(TransactionMode.TRANSACTIONAL)
-          .lockingMode(LockingMode.PESSIMISTIC)
-          .cacheStopTimeout(0)
-          .transactionManagerLookup(new JBossStandaloneJTAManagerLookup())
         .locking()
-          .lockAcquisitionTimeout(500)
+          .isolationLevel(IsolationLevel.READ_COMMITTED)
+          .useLockStriping(false)
+        .transaction()
+          .transactionMode(TransactionMode.NON_TRANSACTIONAL)
+          .lockingMode(LockingMode.OPTIMISTIC)
         .build();
     // Create a cache with the config
     Cache<String, String> cache = cacheManager.administration()
